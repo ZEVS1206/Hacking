@@ -3,14 +3,20 @@
 
 buffer_for_text db 20 dup(0)
 output_phrase db 'You entered:', 0
+output_phrase_correct db 'You have admin rights!', 0
+output_phrase_incorrect db 'You entered incorrect password!', 0
+correct_password db '1234', 0
 len_output_phrase dw $ - output_phrase
+len_output_phrase_correct dw $ - output_phrase_correct
+len_output_phrase_incorrect dw $ - output_phrase_incorrect
 len_buffer_for_text dw 0
 
 .code
 org 100h
 Start:
     call Read_the_text
-    call Print_text
+    call Check_password
+    ;call Print_text
     mov ax, 4c00h
     int 21h
 
@@ -56,8 +62,42 @@ Backspace:
 Finish:
     mov byte ptr [si], 0
     mov len_buffer_for_text, si
+    mov cx, len_buffer_for_text
+    call Print_newline
     ret
 endp
+
+;----------------------------------------------------------
+;Check_password
+;----------------------------------------------------------
+Check_password proc
+    mov si, offset buffer_for_text
+    mov di, offset correct_password
+Loop_print:
+    mov al, [si]
+    mov bl, [di]
+    cmp al, bl
+    jne Incorrect
+    cmp al, 0
+    je End_of_loop
+    inc si
+    inc di
+    jmp Loop_print
+End_of_loop:
+    mov si, offset output_phrase_correct
+    call Print_loop
+    mov cx, len_output_phrase_correct
+    call Print_newline
+    ret
+Incorrect:
+    mov si, offset output_phrase_incorrect
+    call Print_loop
+    mov cx, len_output_phrase_incorrect
+    call Print_newline
+    call Print_text
+    ret
+endp
+
 
 ;----------------------------------------------------------
 ;Print_text
@@ -66,9 +106,6 @@ Print_text proc
 
     mov si, offset output_phrase
     mov ah, 0Eh
-    xor cx, cx
-    mov cx, len_buffer_for_text
-    call Print_newline
     call Print_loop
 
     mov si, offset buffer_for_text
