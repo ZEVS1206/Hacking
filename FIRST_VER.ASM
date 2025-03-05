@@ -1,7 +1,7 @@
 .model tiny
 .data
 
-buffer_for_text db 20 dup(0)
+
 output_phrase db 'You entered:', 0
 output_phrase_correct db 'You have admin rights!', 0
 output_phrase_incorrect db 'You entered incorrect password!', 0
@@ -10,6 +10,7 @@ len_output_phrase dw $ - output_phrase
 len_output_phrase_correct dw $ - output_phrase_correct
 len_output_phrase_incorrect dw $ - output_phrase_incorrect
 len_buffer_for_text dw 0
+
 
 .code
 org 100h
@@ -25,31 +26,35 @@ Start:
 ;----------------------------------------------------------
 Read_the_text proc
     xor cx, cx
-    mov si, offset buffer_for_text
+
+    ;mov ah, 0Ah
+    ;mov dx, offset buffer_for_text
+    ;int 21h
+
+    mov si, offset buffer_for_text + 2
+    ;mov cl, [buffer_for_text+1]
+    ;add si, cx
+    ;mov byte ptr [si], 0
+
 InputLoop:
     mov ah, 00h
     int 16h
     cmp al, 0Dh
     je Finish
-
     cmp al, 08h  ; Backspace?
     je Backspace
-
     mov ah, 0Eh
     int 10h
-
     mov [si], al
     inc si
     inc cx
-    cmp cx, 20
-    jl InputLoop
+    cmp cx, 13
+    jne InputLoop
 Backspace:
     cmp cx, 0
     je Finish
-
     dec si
     dec cx
-
     mov ah, 0Eh
     mov al, 08h; Delete symbol
     int 10h
@@ -71,8 +76,34 @@ endp
 ;Check_password
 ;----------------------------------------------------------
 Check_password proc
-    mov si, offset buffer_for_text
+    mov si, offset buffer_for_text + 2
     mov di, offset correct_password
+    xor cx, cx
+    cmp cx, 0
+    jmp Jump_buffer
+
+    buffer_for_text db 12, 0, 10 dup(0)
+
+Jump_buffer:
+    xor cx, cx
+    ;je End_of_loop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 Loop_print:
     mov al, [si]
     mov bl, [di]
@@ -108,7 +139,7 @@ Print_text proc
     mov ah, 0Eh
     call Print_loop
 
-    mov si, offset buffer_for_text
+    mov si, offset buffer_for_text + 2
     mov cx, len_output_phrase
     call Print_newline
     call Print_loop
